@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import type { Book, Chapter, ChapterNote } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -35,25 +35,51 @@ export function BookDetailView({ book, onBack, onUpdate }: BookDetailViewProps) 
   const [editingNote, setEditingNote] = useState<{ chapterId: string; note: ChapterNote } | null>(null)
   const [deleteChapterDialog, setDeleteChapterDialog] = useState<string | null>(null)
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{ chapterId: string; noteId: string } | null>(null)
+  const [chapters, setChapters] = useState<Chapter[]>(book.chapters || [])
   const { toast } = useToast()
 
-  const handleDeleteChapter = (chapterId: string) => {
-    deleteChapter(book.id, chapterId)
+  const fetchChapters = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}/books/${book.id}/chapters/`)
+        if (res.ok) {
+          const data = await res.json()
+          // Ensure notes is always an array
+          setChapters(data.map((ch: any) => ({ ...ch, notes: ch.notes ?? [] })))
+        }
+      } catch {
+        setChapters(book.chapters || [])
+      }
+    } else {
+      setChapters(book.chapters || [])
+    }
+  }
+
+  // Fetch chapters on mount and when book.id changes
+  React.useEffect(() => {
+    fetchChapters()
+  }, [book.id])
+
+  const handleDeleteChapter = async (chapterId: string) => {
+    await deleteChapter(book.id, chapterId)
     toast({
       title: "Chapter deleted",
       description: "Chapter has been removed.",
     })
     setDeleteChapterDialog(null)
+    fetchChapters()
     onUpdate()
   }
 
-  const handleDeleteNote = (chapterId: string, noteId: string) => {
-    deleteChapterNote(book.id, chapterId, noteId)
+  const handleDeleteNote = async (chapterId: string, noteId: string) => {
+    await deleteChapterNote(book.id, chapterId, noteId)
     toast({
       title: "Note deleted",
       description: "Note has been removed.",
     })
     setDeleteNoteDialog(null)
+    fetchChapters()
     onUpdate()
   }
 
@@ -106,16 +132,16 @@ export function BookDetailView({ book, onBack, onUpdate }: BookDetailViewProps) 
 
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold">Chapters</h2>
-          <AddChapterDialog bookId={book.id} nextChapterNumber={book.chapters.length + 1} onChapterAdded={onUpdate} />
+          <AddChapterDialog bookId={book.id} nextChapterNumber={chapters.length + 1} onChapterAdded={fetchChapters} />
         </div>
 
-        {book.chapters.length === 0 ? (
+        {chapters.length === 0 ? (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">No chapters yet. Add your first chapter to get started!</p>
           </Card>
         ) : (
           <div className="space-y-6">
-            {book.chapters
+            {chapters
               .sort((a, b) => a.chapterNumber - b.chapterNumber)
               .map((chapter) => (
                 <Card key={chapter.id} className="overflow-hidden">

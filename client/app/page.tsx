@@ -62,7 +62,8 @@ export default function HomePage() {
   }
 
   if (selectedBook) {
-    const currentBook = getBooks().find((b) => b.id === selectedBook.id)
+    // Use books from state, which is loaded asynchronously
+    const currentBook = books.find((b) => b.id === selectedBook.id)
     if (!currentBook) {
       setSelectedBook(null)
       return null
