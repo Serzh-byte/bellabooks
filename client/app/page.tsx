@@ -29,8 +29,9 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"books" | "coming-soon">("books")
   const { toast } = useToast()
 
-  const loadBooks = () => {
-    setBooks(getBooks())
+  const loadBooks = async () => {
+    const books = await getBooks()
+    setBooks(books)
   }
 
   useEffect(() => {

@@ -22,7 +22,9 @@ export function AddChapterDialog({ bookId, nextChapterNumber, onChapterAdded }: 
   const [title, setTitle] = useState("")
   const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) {
       toast({
@@ -32,21 +34,29 @@ export function AddChapterDialog({ bookId, nextChapterNumber, onChapterAdded }: 
       })
       return
     }
-
-    addChapter(bookId, {
-      bookId,
-      title: title.trim(),
-      chapterNumber: nextChapterNumber,
-    })
-
-    toast({
-      title: "Chapter added",
-      description: `Chapter ${nextChapterNumber} has been added.`,
-    })
-
-    setTitle("")
-    setOpen(false)
-    onChapterAdded()
+    setIsAdding(true)
+    try {
+      await addChapter(bookId, {
+        bookId,
+        title: title.trim(),
+        chapterNumber: nextChapterNumber,
+      })
+      toast({
+        title: "Chapter added",
+        description: `Chapter ${nextChapterNumber} has been added.`,
+      })
+      setTitle("")
+      setOpen(false)
+      onChapterAdded()
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to add chapter. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   return (
@@ -77,8 +87,8 @@ export function AddChapterDialog({ bookId, nextChapterNumber, onChapterAdded }: 
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Add Chapter
+            <Button type="submit" className="flex-1" disabled={isAdding}>
+              {isAdding ? "Adding..." : "Add Chapter"}
             </Button>
           </div>
         </form>

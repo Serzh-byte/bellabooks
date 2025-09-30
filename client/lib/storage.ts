@@ -4,12 +4,28 @@ import type { Book, Chapter, ChapterNote } from "./types"
 
 const STORAGE_KEY = "books-notes-data"
 
-export function getBooks(): Book[] {
+export async function getBooks(): Promise<Book[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/books/list/`)
+      if (res.ok) {
+        const books = await res.json()
+        return books.map((book: any) => ({
+          ...book,
+          createdAt: new Date(book.createdAt),
+          chapters: [], // Chapters will be fetched separately if needed
+        }))
+      }
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEY)
   if (!data) return []
   const books = JSON.parse(data)
-  // Convert date strings back to Date objects
   return books.map((book: any) => ({
     ...book,
     createdAt: new Date(book.createdAt),
@@ -91,17 +107,46 @@ export function deleteBook(id: string): void {
   saveBooks(books)
 }
 
-export function addChapter(bookId: string, chapter: Omit<Chapter, "id" | "notes">): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
-  if (book) {
-    const newChapter: Chapter = {
-      ...chapter,
-      id: crypto.randomUUID(),
-      notes: [],
+export async function addChapter(bookId: string, chapter: Omit<Chapter, "id" | "notes">): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/books/${bookId}/add-chapter/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(chapter),
+      })
+      if (!res.ok) throw new Error("Failed to add chapter")
+      await res.json()
+    } catch {
+      // fallback to localStorage if backend fails
+      const books = getBooks()
+      const book = books.find((b) => b.id === bookId)
+      if (book) {
+        const newChapter: Chapter = {
+          ...chapter,
+          id: crypto.randomUUID(),
+          notes: [],
+        }
+        book.chapters.push(newChapter)
+        saveBooks(books)
+      }
     }
-    book.chapters.push(newChapter)
-    saveBooks(books)
+  } else {
+    // fallback to localStorage
+    const books = getBooks()
+    const book = books.find((b) => b.id === bookId)
+    if (book) {
+      const newChapter: Chapter = {
+        ...chapter,
+        id: crypto.randomUUID(),
+        notes: [],
+      }
+      book.chapters.push(newChapter)
+      saveBooks(books)
+    }
   }
 }
 
