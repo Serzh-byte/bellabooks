@@ -178,11 +178,25 @@ export async function addChapter(bookId: string, chapter: Omit<Chapter, "id" | "
   }
 }
 
-export function updateChapter(bookId: string, chapterId: string, updates: Partial<Chapter>): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
+export async function updateChapter(bookId: string, chapterId: string, updates: Partial<Chapter>): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      await fetch(`${apiUrl}/books/chapter/${chapterId}/update/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const book = books.find((b: Book) => b.id === bookId)
   if (book) {
-    const chapterIndex = book.chapters.findIndex((c) => c.id === chapterId)
+    const chapterIndex = book.chapters.findIndex((c: Chapter) => c.id === chapterId)
     if (chapterIndex !== -1) {
       book.chapters[chapterIndex] = { ...book.chapters[chapterIndex], ...updates }
       saveBooks(books)
@@ -245,18 +259,32 @@ export async function addChapterNote(bookId: string, chapterId: string, note: Om
   }
 }
 
-export function updateChapterNote(
+export async function updateChapterNote(
   bookId: string,
   chapterId: string,
   noteId: string,
   updates: Partial<ChapterNote>,
-): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
+): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      await fetch(`${apiUrl}/books/note/${noteId}/update/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const book = books.find((b: Book) => b.id === bookId)
   if (book) {
-    const chapter = book.chapters.find((c) => c.id === chapterId)
+    const chapter = book.chapters.find((c: Chapter) => c.id === chapterId)
     if (chapter) {
-      const noteIndex = chapter.notes.findIndex((n) => n.id === noteId)
+      const noteIndex = chapter.notes.findIndex((n: ChapterNote) => n.id === noteId)
       if (noteIndex !== -1) {
         chapter.notes[noteIndex] = { ...chapter.notes[noteIndex], ...updates }
         saveBooks(books)

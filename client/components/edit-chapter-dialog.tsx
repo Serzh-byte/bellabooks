@@ -44,15 +44,14 @@ export function EditChapterDialog({ bookId, chapter, open, onOpenChange, onChapt
 
     updateChapter(bookId, chapter.id, {
       title: title.trim(),
+    }).then(() => {
+      toast({
+        title: "Chapter updated",
+        description: "Chapter has been updated successfully.",
+      })
+      onOpenChange(false)
+      onChapterUpdated()
     })
-
-    toast({
-      title: "Chapter updated",
-      description: "Chapter has been updated successfully.",
-    })
-
-    onOpenChange(false)
-    onChapterUpdated()
   }
 
   if (!chapter) return null

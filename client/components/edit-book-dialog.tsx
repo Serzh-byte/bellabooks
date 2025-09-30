@@ -125,7 +125,7 @@ export function EditBookDialog({ book, open, onOpenChange, onBookUpdated }: Edit
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!book) return
 
@@ -138,7 +138,7 @@ export function EditBookDialog({ book, open, onOpenChange, onBookUpdated }: Edit
       return
     }
 
-    updateBook(book.id, {
+    await updateBook(book.id, {
       title: title.trim(),
       author: author.trim(),
       notes: notes.trim(),

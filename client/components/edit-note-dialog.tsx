@@ -49,15 +49,14 @@ export function EditNoteDialog({ bookId, chapterId, note, open, onOpenChange, on
     updateChapterNote(bookId, chapterId, note.id, {
       content: content.trim(),
       author,
+    }).then(() => {
+      toast({
+        title: "Note updated",
+        description: "Note has been updated successfully.",
+      })
+      onOpenChange(false)
+      onNoteUpdated()
     })
-
-    toast({
-      title: "Note updated",
-      description: "Note has been updated successfully.",
-    })
-
-    onOpenChange(false)
-    onNoteUpdated()
   }
 
   if (!note) return null

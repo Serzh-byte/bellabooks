@@ -1,3 +1,56 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
+# PATCH CHAPTER
+@csrf_exempt
+def update_chapter(request, chapter_id):
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'detail': 'CORS preflight'})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "PATCH, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    if request.method == 'PATCH':
+        try:
+            chapter = Chapter.objects.get(id=chapter_id)
+            data = json.loads(request.body)
+            if 'title' in data:
+                chapter.title = data['title']
+            if 'chapterNumber' in data:
+                chapter.chapter_number = data['chapterNumber']
+            chapter.save()
+            return JsonResponse({'id': chapter.id, 'title': chapter.title, 'chapterNumber': chapter.chapter_number}, status=200)
+        except Chapter.DoesNotExist:
+            return JsonResponse({'error': 'Chapter not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+# PATCH NOTE
+@csrf_exempt
+def update_note(request, note_id):
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'detail': 'CORS preflight'})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "PATCH, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    if request.method == 'PATCH':
+        try:
+            note = ChapterNote.objects.get(id=note_id)
+            data = json.loads(request.body)
+            if 'content' in data:
+                note.content = data['content']
+            if 'author' in data:
+                note.author = data['author']
+            note.save()
+            return JsonResponse({'id': note.id, 'content': note.content, 'author': note.author, 'timestamp': note.timestamp.isoformat()}, status=200)
+        except ChapterNote.DoesNotExist:
+            return JsonResponse({'error': 'Note not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
 from .models import Book, Chapter, ChapterNote
 
 # DELETE BOOK
