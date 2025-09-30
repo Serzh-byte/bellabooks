@@ -112,7 +112,9 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !author.trim()) {
       toast({
@@ -122,25 +124,33 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
       })
       return
     }
-
-    addBook({
-      title: title.trim(),
-      author: author.trim(),
-      notes: "",
-      coverImage: coverImage || undefined,
-    })
-
-    toast({
-      title: "Book added",
-      description: `"${title}" has been added to your collection.`,
-    })
-
-    setTitle("")
-    setAuthor("")
-    setCoverImage(null)
-    setImageUrl("")
-    setOpen(false)
-    onBookAdded()
+    setIsAdding(true)
+    try {
+      await addBook({
+        title: title.trim(),
+        author: author.trim(),
+        notes: "",
+        coverImage: coverImage || undefined,
+      })
+      toast({
+        title: "Book added",
+        description: `"${title}" has been added to your collection.`,
+      })
+      setTitle("")
+      setAuthor("")
+      setCoverImage(null)
+      setImageUrl("")
+      setOpen(false)
+      onBookAdded()
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to add book. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   return (
@@ -277,8 +287,8 @@ export function AddBookDialog({ onBookAdded }: AddBookDialogProps) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Add Book
+            <Button type="submit" className="flex-1" disabled={isAdding}>
+              {isAdding ? "Adding..." : "Add Book"}
             </Button>
           </div>
         </form>
