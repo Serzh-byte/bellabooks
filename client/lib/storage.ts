@@ -93,9 +93,24 @@ export function addBook(book: Omit<Book, "id" | "createdAt" | "chapters">): Book
   }
 }
 
-export function updateBook(id: string, updates: Partial<Book>): void {
-  const books = getBooks()
-  const index = books.findIndex((b) => b.id === id)
+export async function updateBook(id: string, updates: Partial<Book>): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      await fetch(`${apiUrl}/books/${id}/update/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      })
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const index = books.findIndex((b: any) => b.id === id)
   if (index !== -1) {
     books[index] = { ...books[index], ...updates }
     saveBooks(books)
