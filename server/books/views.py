@@ -1,3 +1,65 @@
+from .models import Book, Chapter, ChapterNote
+
+# DELETE BOOK
+from django.views.decorators.csrf import csrf_exempt
+@csrf_exempt
+def delete_book(request, book_id):
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'detail': 'CORS preflight'})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    if request.method == 'DELETE':
+        try:
+            book = Book.objects.get(id=book_id)
+            book.delete()
+            return JsonResponse({'success': True}, status=200)
+        except Book.DoesNotExist:
+            return JsonResponse({'error': 'Book not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+# DELETE CHAPTER
+@csrf_exempt
+def delete_chapter(request, chapter_id):
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'detail': 'CORS preflight'})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    if request.method == 'DELETE':
+        try:
+            chapter = Chapter.objects.get(id=chapter_id)
+            chapter.delete()
+            return JsonResponse({'success': True}, status=200)
+        except Chapter.DoesNotExist:
+            return JsonResponse({'error': 'Chapter not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+# DELETE NOTE
+@csrf_exempt
+def delete_note(request, note_id):
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'detail': 'CORS preflight'})
+        response["Access-Control-Allow-Origin"] = "*"
+        response["Access-Control-Allow-Methods"] = "DELETE, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type"
+        return response
+    if request.method == 'DELETE':
+        try:
+            note = ChapterNote.objects.get(id=note_id)
+            note.delete()
+            return JsonResponse({'success': True}, status=200)
+        except ChapterNote.DoesNotExist:
+            return JsonResponse({'error': 'Note not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json

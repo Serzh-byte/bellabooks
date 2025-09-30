@@ -117,9 +117,22 @@ export async function updateBook(id: string, updates: Partial<Book>): Promise<vo
   }
 }
 
-export function deleteBook(id: string): void {
-  const books = getBooks().filter((b) => b.id !== id)
-  saveBooks(books)
+export async function deleteBook(id: string): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/books/${id}/delete/`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to delete book")
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  saveBooks(books.filter((b: Book) => b.id !== id))
 }
 
 export async function addChapter(bookId: string, chapter: Omit<Chapter, "id" | "notes">): Promise<void> {
@@ -177,20 +190,49 @@ export function updateChapter(bookId: string, chapterId: string, updates: Partia
   }
 }
 
-export function deleteChapter(bookId: string, chapterId: string): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
+export async function deleteChapter(bookId: string, chapterId: string): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/books/chapter/${chapterId}/delete/`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to delete chapter")
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const book = books.find((b: Book) => b.id === bookId)
   if (book) {
-    book.chapters = book.chapters.filter((c) => c.id !== chapterId)
+    book.chapters = book.chapters.filter((c: Chapter) => c.id !== chapterId)
     saveBooks(books)
   }
 }
 
-export function addChapterNote(bookId: string, chapterId: string, note: Omit<ChapterNote, "id" | "timestamp">): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
+export async function addChapterNote(bookId: string, chapterId: string, note: Omit<ChapterNote, "id" | "timestamp">): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      await fetch(`${apiUrl}/books/chapter/${chapterId}/add-note/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(note),
+      })
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const book = books.find((b: any) => b.id === bookId)
   if (book) {
-    const chapter = book.chapters.find((c) => c.id === chapterId)
+    const chapter = book.chapters.find((c: any) => c.id === chapterId)
     if (chapter) {
       const newNote: ChapterNote = {
         ...note,
@@ -223,13 +265,26 @@ export function updateChapterNote(
   }
 }
 
-export function deleteChapterNote(bookId: string, chapterId: string, noteId: string): void {
-  const books = getBooks()
-  const book = books.find((b) => b.id === bookId)
+export async function deleteChapterNote(bookId: string, chapterId: string, noteId: string): Promise<void> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (apiUrl) {
+    try {
+      const res = await fetch(`${apiUrl}/books/note/${noteId}/delete/`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to delete note")
+      return
+    } catch {
+      // fallback to localStorage
+    }
+  }
+  // fallback to localStorage
+  const books = await getBooks()
+  const book = books.find((b: Book) => b.id === bookId)
   if (book) {
-    const chapter = book.chapters.find((c) => c.id === chapterId)
+    const chapter = book.chapters.find((c: Chapter) => c.id === chapterId)
     if (chapter) {
-      chapter.notes = chapter.notes.filter((n) => n.id !== noteId)
+      chapter.notes = chapter.notes.filter((n: ChapterNote) => n.id !== noteId)
       saveBooks(books)
     }
   }

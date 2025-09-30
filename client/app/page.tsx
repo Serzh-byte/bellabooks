@@ -23,15 +23,23 @@ import { Button } from "@/components/ui/button"
 
 export default function HomePage() {
   const [books, setBooks] = useState<Book[]>([])
+  const [booksCache, setBooksCache] = useState<{ books: Book[]; timestamp: number } | null>(null)
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [deleteBookDialog, setDeleteBookDialog] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"books" | "coming-soon">("books")
   const { toast } = useToast()
 
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
   const loadBooks = async () => {
+    const now = Date.now()
+    if (booksCache && now - booksCache.timestamp < CACHE_DURATION) {
+      setBooks(booksCache.books)
+      return
+    }
     const books = await getBooks()
     setBooks(books)
+    setBooksCache({ books, timestamp: now })
   }
 
   useEffect(() => {
@@ -103,7 +111,7 @@ export default function HomePage() {
               <div>
                 <h2 className="text-2xl font-semibold md:text-3xl">Your Library</h2>
                 <p className="mt-1 text-sm text-muted-foreground md:text-base">
-                  A cozy space for Serzh & Bella to share their reading journey
+                  Reading together!!!!!!!
                 </p>
               </div>
               <AddBookDialog onBookAdded={loadBooks} />
@@ -115,7 +123,6 @@ export default function HomePage() {
                   <BookOpen className="mx-auto mb-4 h-12 w-12 md:h-16 md:w-16 text-muted-foreground/40" />
                   <h3 className="mb-2 text-lg md:text-xl font-semibold">No books yet</h3>
                   <p className="mb-6 text-sm md:text-base text-muted-foreground">
-                    Start building your reading collection!
                   </p>
                   <AddBookDialog onBookAdded={loadBooks} />
                 </div>

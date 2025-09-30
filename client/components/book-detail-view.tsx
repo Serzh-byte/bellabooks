@@ -11,6 +11,7 @@ import { EditChapterDialog } from "./edit-chapter-dialog"
 import { AddNoteDialog } from "./add-note-dialog"
 import { EditNoteDialog } from "./edit-note-dialog"
 import { deleteChapter, deleteChapterNote } from "@/lib/storage"
+import { NoteComments } from "./note-comments"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -31,11 +32,52 @@ interface BookDetailViewProps {
 }
 
 export function BookDetailView({ book, onBack, onUpdate }: BookDetailViewProps) {
+  const [chapters, setChapters] = useState<Chapter[]>(book.chapters || [])
+  const [chaptersCache, setChaptersCache] = useState<{ chapters: Chapter[]; timestamp: number } | null>(null)
+  // Fetch notes for each chapter from backend
+  const fetchNotesForChapter = async (chapterId: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}/books/chapter/${chapterId}/notes/`)
+        if (res.ok) {
+          const data = await res.json()
+          // Convert timestamp to Date
+          return data.map((note: any) => ({ ...note, timestamp: new Date(note.timestamp) }))
+        }
+      } catch {
+        return []
+      }
+    }
+    return []
+  }
+
+  // Cache chapters and notes for 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  React.useEffect(() => {
+    const now = Date.now()
+    if (chaptersCache && now - chaptersCache.timestamp < CACHE_DURATION) {
+      setChapters(chaptersCache.chapters)
+      return
+    }
+    const fetchAllNotes = async () => {
+      const updatedChapters = await Promise.all(
+        chapters.map(async (ch) => {
+          const notes = await fetchNotesForChapter(ch.id)
+          return { ...ch, notes }
+        })
+      )
+      setChapters(updatedChapters)
+      setChaptersCache({ chapters: updatedChapters, timestamp: now })
+    }
+    if (chapters.length > 0) {
+      fetchAllNotes()
+    }
+  }, [chapters.length])
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null)
   const [editingNote, setEditingNote] = useState<{ chapterId: string; note: ChapterNote } | null>(null)
   const [deleteChapterDialog, setDeleteChapterDialog] = useState<string | null>(null)
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{ chapterId: string; noteId: string } | null>(null)
-  const [chapters, setChapters] = useState<Chapter[]>(book.chapters || [])
   const { toast } = useToast()
 
   const fetchChapters = async () => {
@@ -229,6 +271,7 @@ export function BookDetailView({ book, onBack, onUpdate }: BookDetailViewProps) 
                                 </div>
                               </div>
                               <p className="whitespace-pre-wrap text-sm leading-relaxed">{note.content}</p>
+                              <NoteComments noteId={note.id} />
                             </Card>
                           ))}
                       </div>
