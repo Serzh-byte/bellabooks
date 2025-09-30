@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-^%+typ^loa92=mk=)4!0&y@agr9-zsnp@z%gifmh^nh#irm0&g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['bellabooks-19lt.vercel.app', 'bellabooks-production.up.railway.app', '127.0.0.1', 'localhost']
 
 import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
